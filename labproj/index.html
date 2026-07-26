@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Movie Logger</title>
+    <viewport name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            width:500px;
+            margin:40px auto;
+            background:#111;
+            color:white;
+        }
+
+        input,select,button{
+            padding:8px;
+            margin:5px;
+            border-radius:4px;
+        }
+
+        button{
+            cursor:pointer;
+            background-color: rgb(18, 79, 23);
+            color: white;
+            border: none;
+
+        }
+
+        delete{
+            background-color: rgb(18, 79, 23);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            float: right;
+        }
+
+        li{
+            margin:10px 0;
+            background-color: rgba(169, 169, 169, 0.021);
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>Movie Logger</h2>
+
+<input type="text" id="title" placeholder="Movie Name">
+
+<select id="rating">
+    <option value="5">★★★★★</option>
+    <option value="4">★★★★</option>
+    <option value="3">★★★</option>
+    <option value="2">★★</option>
+    <option value="1">★</option>
+</select>
+
+<button onclick="addMovie()">Add Movie</button>
+
+<hr>
+
+<ul id="movieList"></ul>
+
+<script>
+
+let movies = [
+    {
+        "title":"One Battle After Another",
+        "rating":5
+    },
+    {
+        "title":"Italian Spiderman",
+        "rating":5
+    }
+];
+
+displayMovies();
+
+function addMovie(){
+
+    let title = document.getElementById("title").value;
+    let rating = Number(document.getElementById("rating").value);
+
+    if(title=="")
+        return;
+
+    movies.push({
+        "title":title,
+        "rating":rating
+    });
+
+    document.getElementById("title").value="";
+
+    displayMovies();
+}
+
+function displayMovies(){
+
+    let list = document.getElementById("movieList");
+
+    list.innerHTML="";
+
+    for(let i=0;i<movies.length;i++){
+
+        list.innerHTML +=
+        `<li>
+            ${movies[i].title} - ${"★".repeat(movies[i].rating)}
+            <delete onclick="deleteMovie(${i})" id="delete"> Delete </delete>
+        </li>`;
+    }
+    console.log(movies);
+
+}
+
+function deleteMovie(index){
+
+    movies.splice(index,1);
+
+    displayMovies();
+
+}
+
+</script>
+
+</body>
+</html>
