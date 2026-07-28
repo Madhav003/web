@@ -1,45 +1,201 @@
 <!DOCTYPE html>
 <html>
 <head>
+
     <title>Movie Logger</title>
-    <viewport name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <!-- I. Viewport meta tag -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Elegant serif for headings/titles, refined light sans for body -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
+        :root{
+            --gold: #b8860b;
+            --gold-light: #d4a537;
+            --paper: #faf7f2;
+            --ink: #2b2620;
+            --ink-soft: #6b6459;
+            --hairline: #e6ddcf;
+        }
+
         body{
-            font-family: Arial, sans-serif;
-            width:500px;
-            margin:40px auto;
-            background:#111;
-            color:white;
+            font-family: 'Jost', sans-serif;
+            font-weight: 300;
+            /* II. width + max-width instead of a fixed px width */
+            width: 90%;
+            max-width: 640px;
+            margin: 60px auto;
+            background: var(--paper);
+            color: var(--ink);
+            letter-spacing: 0.02em;
+        }
+
+        h2{
+            /* III. responsive text size using vw, capped with clamp() so it
+               doesn't get silly on very wide or very narrow screens */
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
+            font-size: clamp(2.2rem, 7vw, 3.4rem);
+            text-align: center;
+            letter-spacing: 0.04em;
+            color: var(--ink);
+            margin-bottom: 4px;
+        }
+
+        h2::after{
+            content: "";
+            display:block;
+            width: 60px;
+            height: 1px;
+            background: var(--gold);
+            margin: 18px auto 40px;
+        }
+
+        .controls{
+            display:flex;
+            flex-wrap:wrap;
+            justify-content:center;
+            gap: 10px;
         }
 
         input,select,button{
-            padding:8px;
+            padding:10px 14px;
             margin:5px;
-            border-radius:4px;
+            border-radius:2px;
+            border: 1px solid var(--hairline);
+            background: #fff;
+            font-family: 'Jost', sans-serif;
+            font-weight: 400;
+            font-size: 0.95rem;
+            color: var(--ink);
+        }
+
+        input:focus, select:focus{
+            outline: none;
+            border-color: var(--gold);
         }
 
         button{
             cursor:pointer;
-            background-color: rgb(18, 79, 23);
-            color: white;
+            background-color: var(--gold);
+            color: #fff;
             border: none;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-size: 0.78rem;
+            transition: background-color 0.2s ease;
+        }
 
+        button:hover{
+            background-color: var(--gold-light);
         }
 
         delete{
-            background-color: rgb(18, 79, 23);
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
+            background: transparent;
+            color: var(--ink-soft);
+            border: 1px solid var(--hairline);
+            padding: 4px 10px;
+            border-radius: 2px;
             float: right;
+            font-size: 0.7rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: border-color 0.2s ease, color 0.2s ease;
+        }
+
+        delete:hover{
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        hr{
+            border: none;
+            border-top: 1px solid var(--hairline);
+            margin: 30px 0;
+        }
+
+        ul{
+            list-style:none;
+            padding:0;
         }
 
         li{
-            margin:10px 0;
-            background-color: rgba(169, 169, 169, 0.021);
-            padding: 10px;
-            border-radius: 4px;
+            margin: 18px 0;
+            background-color: #fff;
+            padding: 16px;
+            border-radius: 2px;
+            border: 1px solid var(--hairline);
+            display:flex;
+            align-items:center;
+            gap:16px;
+        }
+
+        /* II. poster image resizes fluidly with its container */
+        .poster{
+            width: 60px;
+            max-width: 100%;
+            height: auto;
+            border-radius: 2px;
+            flex-shrink:0;
+            border: 1px solid var(--hairline);
+        }
+
+        .movie-info{
+            flex:1;
+        }
+
+        .movie-title{
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
+            font-size: clamp(1.05rem, 2.8vw, 1.3rem);
+            color: var(--ink);
+        }
+
+        .stars{
+            color: var(--gold);
+            letter-spacing: 0.1em;
+        }
+
+        /* IV. Breakpoint 1: small phones — stack the form controls and
+           make the poster bigger so it reads well on a narrow screen */
+        @media (max-width: 480px){
+            input, select, button{
+                display:block;
+                width:100%;
+                margin:8px 0;
+            }
+
+            .poster{
+                width: 90px;
+            }
+        }
+
+        /* IV. Breakpoint 2: tablets — slightly narrower body, medium poster */
+        @media (min-width: 481px) and (max-width: 768px){
+            body{
+                width: 95%;
+            }
+
+            .poster{
+                width: 70px;
+            }
+        }
+
+        /* IV. Breakpoint 3: desktop — movie list becomes a 2-column grid
+           instead of a single stacked column */
+        @media (min-width: 769px){
+            #movieList{
+                display:grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+
+            .poster{
+                width: 80px;
+            }
         }
     </style>
 </head>
@@ -48,17 +204,19 @@
 
 <h2>Movie Logger</h2>
 
-<input type="text" id="title" placeholder="Movie Name">
+<div class="controls">
+    <input type="text" id="title" placeholder="Movie Name">
 
-<select id="rating">
-    <option value="5">★★★★★</option>
-    <option value="4">★★★★</option>
-    <option value="3">★★★</option>
-    <option value="2">★★</option>
-    <option value="1">★</option>
-</select>
+    <select id="rating">
+        <option value="5">★★★★★</option>
+        <option value="4">★★★★</option>
+        <option value="3">★★★</option>
+        <option value="2">★★</option>
+        <option value="1">★</option>
+    </select>
 
-<button onclick="addMovie()">Add Movie</button>
+    <button onclick="addMovie()">Add Movie</button>
+</div>
 
 <hr>
 
@@ -105,10 +263,17 @@ function displayMovies(){
 
     for(let i=0;i<movies.length;i++){
 
+        // II. poster image sourced per-movie, resizes responsively via .poster CSS
+        let posterUrl = `https://picsum.photos/seed/${encodeURIComponent(movies[i].title)}/200/300`;
+
         list.innerHTML +=
         `<li>
-            ${movies[i].title} - ${"★".repeat(movies[i].rating)}
-            <delete onclick="deleteMovie(${i})" id="delete"> Delete </delete>
+            <img class="poster" src="${posterUrl}" alt="${movies[i].title} poster">
+            <div class="movie-info">
+                <div class="movie-title">${movies[i].title}</div>
+                <span class="stars">${"★".repeat(movies[i].rating)}</span>
+                <delete onclick="deleteMovie(${i})" id="delete"> Delete </delete>
+            </div>
         </li>`;
     }
     console.log(movies);
