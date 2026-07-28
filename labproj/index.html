@@ -1,3 +1,11 @@
+<!-- I. Create a responsive web page involves using the viewport meta tag in the head of your
+HTML document.
+II. Create a responsive web page by using the width and max-width Properties and Changing
+images according to the browser width.
+III. Create a responsive web page that demonstrates responsive text size using the "vw"
+(viewport width) unit in CSS
+IV. Create a responsive web page that demonstrates media queries for creating breakpoints in
+the web page. -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -24,8 +32,8 @@
             font-family: 'Jost', sans-serif;
             font-weight: 300;
             /* II. width + max-width instead of a fixed px width */
-            width: 90%;
-            max-width: 640px;
+            width: 92%;
+            max-width: 900px;
             margin: 60px auto;
             background: var(--paper);
             color: var(--ink);
@@ -120,47 +128,84 @@
         ul{
             list-style:none;
             padding:0;
+            display:grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 22px;
         }
 
         li{
-            margin: 18px 0;
-            background-color: #fff;
-            padding: 16px;
-            border-radius: 2px;
-            border: 1px solid var(--hairline);
-            display:flex;
-            align-items:center;
-            gap:16px;
+            position: relative;
+            aspect-ratio: 2 / 3;
+            border-radius: 3px;
+            overflow: hidden;
+            border: 2px solid var(--gold);
+            box-shadow: 0 1px 3px rgba(43,38,32,0.08);
+            cursor: pointer;
         }
 
-        /* II. poster image resizes fluidly with its container */
+        /* II. poster image fills its card and resizes fluidly with it */
         .poster{
-            width: 60px;
-            max-width: 100%;
-            height: auto;
-            border-radius: 2px;
-            flex-shrink:0;
-            border: 1px solid var(--hairline);
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         }
 
-        .movie-info{
-            flex:1;
+        .overlay{
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(20,17,12,0.92) 0%, rgba(20,17,12,0.55) 45%, rgba(20,17,12,0) 75%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 16px;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        li:hover .overlay,
+        li.active .overlay{
+            opacity: 1;
         }
 
         .movie-title{
             font-family: 'Cormorant Garamond', serif;
             font-weight: 600;
-            font-size: clamp(1.05rem, 2.8vw, 1.3rem);
-            color: var(--ink);
+            font-size: clamp(1rem, 2.2vw, 1.25rem);
+            color: #fff;
+            line-height: 1.15;
         }
 
         .stars{
-            color: var(--gold);
+            color: var(--gold-light);
             letter-spacing: 0.1em;
+            font-size: 0.85rem;
+            margin-top: 4px;
+            display: block;
         }
 
-        /* IV. Breakpoint 1: small phones — stack the form controls and
-           make the poster bigger so it reads well on a narrow screen */
+        delete{
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(20,17,12,0.6);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 3px 8px;
+            border-radius: 2px;
+            font-size: 0.62rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        delete:hover{
+            border-color: var(--gold-light);
+            color: var(--gold-light);
+        }
+
+        /* IV. Breakpoint 1: small phones — stack the form controls,
+           posters go to a single column so they stay big and readable */
         @media (max-width: 480px){
             input, select, button{
                 display:block;
@@ -168,33 +213,27 @@
                 margin:8px 0;
             }
 
-            .poster{
-                width: 90px;
+            ul{
+                grid-template-columns: 1fr;
+                gap: 18px;
             }
         }
 
-        /* IV. Breakpoint 2: tablets — slightly narrower body, medium poster */
+        /* IV. Breakpoint 2: tablets — 2 posters per row */
         @media (min-width: 481px) and (max-width: 768px){
             body{
                 width: 95%;
             }
 
-            .poster{
-                width: 70px;
+            ul{
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
-        /* IV. Breakpoint 3: desktop — movie list becomes a 2-column grid
-           instead of a single stacked column */
+        /* IV. Breakpoint 3: desktop — full 4-across poster wall */
         @media (min-width: 769px){
-            #movieList{
-                display:grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 10px;
-            }
-
-            .poster{
-                width: 80px;
+            ul{
+                grid-template-columns: repeat(4, 1fr);
             }
         }
     </style>
@@ -264,23 +303,37 @@ function displayMovies(){
     for(let i=0;i<movies.length;i++){
 
         // II. poster image sourced per-movie, resizes responsively via .poster CSS
-        let posterUrl = `https://picsum.photos/seed/${encodeURIComponent(movies[i].title)}/200/300`;
+        let posterUrl = `https://picsum.photos/seed/${encodeURIComponent(movies[i].title)}/400/600`;
 
         list.innerHTML +=
-        `<li>
+        `<li onclick="toggleActive(this, event)">
             <img class="poster" src="${posterUrl}" alt="${movies[i].title} poster">
-            <div class="movie-info">
+            <div class="overlay">
                 <div class="movie-title">${movies[i].title}</div>
                 <span class="stars">${"★".repeat(movies[i].rating)}</span>
-                <delete onclick="deleteMovie(${i})" id="delete"> Delete </delete>
             </div>
+            <delete onclick="deleteMovie(${i}, event)"> Delete </delete>
         </li>`;
     }
     console.log(movies);
 
 }
 
-function deleteMovie(index){
+function toggleActive(card, event){
+    // lets tap-to-reveal work on touch devices, alongside :hover for desktop
+    if(event.target.tagName.toLowerCase() === "delete")
+        return;
+
+    document.querySelectorAll("#movieList li").forEach(function(li){
+        if(li !== card) li.classList.remove("active");
+    });
+
+    card.classList.toggle("active");
+}
+
+function deleteMovie(index, event){
+
+    event.stopPropagation();
 
     movies.splice(index,1);
 
