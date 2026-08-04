@@ -1,20 +1,10 @@
-<!-- I. Create a responsive web page involves using the viewport meta tag in the head of your
-HTML document.
-II. Create a responsive web page by using the width and max-width Properties and Changing
-images according to the browser width.
-III. Create a responsive web page that demonstrates responsive text size using the "vw"
-(viewport width) unit in CSS
-IV. Create a responsive web page that demonstrates media queries for creating breakpoints in
-the web page. -->
 <!DOCTYPE html>
 <html>
 <head>
 
     <title>Movie Logger</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <!-- I. Viewport meta tag -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Elegant serif for headings/titles, refined light sans for body -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
@@ -31,18 +21,21 @@ the web page. -->
         body{
             font-family: 'Jost', sans-serif;
             font-weight: 300;
-            /* II. width + max-width instead of a fixed px width */
             width: 92%;
             max-width: 900px;
             margin: 60px auto;
             background: var(--paper);
             color: var(--ink);
             letter-spacing: 0.02em;
+            transition: background-color 0.2s ease;
+        }
+
+        /* highlight while dragging a JSON file over the page */
+        body.drag-active{
+            background-color: #fdf3dd;
         }
 
         h2{
-            /* III. responsive text size using vw, capped with clamp() so it
-               doesn't get silly on very wide or very narrow screens */
             font-family: 'Cormorant Garamond', serif;
             font-weight: 600;
             font-size: clamp(2.2rem, 7vw, 3.4rem);
@@ -125,6 +118,15 @@ the web page. -->
             margin: 30px 0;
         }
 
+        .dropzone-hint{
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--ink-soft);
+            letter-spacing: 0.04em;
+            margin-top: -18px;
+            margin-bottom: 26px;
+        }
+
         ul{
             list-style:none;
             padding:0;
@@ -181,6 +183,15 @@ the web page. -->
             letter-spacing: 0.1em;
             font-size: 0.85rem;
             margin-top: 4px;
+            display: block;
+        }
+
+        .location{
+            color: rgba(255,255,255,0.65);
+            font-size: 0.65rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-top: 6px;
             display: block;
         }
 
@@ -257,6 +268,8 @@ the web page. -->
     <button onclick="addMovie()">Add Movie</button>
 </div>
 
+<p class="dropzone-hint">or drag &amp; drop a .json file anywhere on this page to import movies</p>
+
 <hr>
 
 <ul id="movieList"></ul>
@@ -266,11 +279,23 @@ the web page. -->
 let movies = [
     {
         "title":"One Battle After Another",
-        "rating":5
+        "rating":5,
+        "location": null
     },
     {
         "title":"Italian Spiderman",
-        "rating":5
+        "rating":5,
+        "location": null
+    },
+    {
+        "title":"richa",
+        "rating":4,
+        "location": null
+    },
+    {
+        "title":"The Godfather",
+        "rating":5,
+        "location": null
     }
 ];
 
@@ -284,14 +309,52 @@ function addMovie(){
     if(title=="")
         return;
 
-    movies.push({
+    let newMovie = {
         "title":title,
-        "rating":rating
-    });
+        "rating":rating,
+        "location": null
+    };
+
+    movies.push(newMovie);
 
     document.getElementById("title").value="";
 
     displayMovies();
+
+    // Geolocation API: tag this entry with where it was logged from
+    tagLocation(newMovie);
+}
+
+function tagLocation(movieRef){
+
+    if(!navigator.geolocation)
+        return;
+
+    navigator.geolocation.getCurrentPosition(function(pos){
+
+        let lat = pos.coords.latitude;
+        let lon = pos.coords.longitude;
+
+        // free reverse-geocoding, no API key needed
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+            .then(res => res.json())
+            .then(data => {
+                let addr = data.address || {};
+                let city = addr.city || addr.town || addr.village || addr.county || "";
+                let country = addr.country || "";
+
+                movieRef.location = [city, country].filter(Boolean).join(", ");
+
+                displayMovies();
+            })
+            .catch(() => {
+                // reverse geocoding failed, just leave location blank
+            });
+
+    }, function(err){
+        // permission denied or unavailable, silently skip
+        console.log("Geolocation unavailable:", err.message);
+    });
 }
 
 function displayMovies(){
@@ -310,7 +373,8 @@ function displayMovies(){
             <img class="poster" src="${posterUrl}" alt="${movies[i].title} poster">
             <div class="overlay">
                 <div class="movie-title">${movies[i].title}</div>
-                <span class="stars">${"★".repeat(movies[i].rating)}</span>
+                <span class="stars">${"★".repeat(movies[i].rating || 0)}</span>
+                ${movies[i].location ? `<span class="location">${movies[i].location}</span>` : ""}
             </div>
             <delete onclick="deleteMovie(${i}, event)"> Delete </delete>
         </li>`;
@@ -320,14 +384,12 @@ function displayMovies(){
 }
 
 function toggleActive(card, event){
-    // lets tap-to-reveal work on touch devices, alongside :hover for desktop
-    if(event.target.tagName.toLowerCase() === "delete")
-        return;
-
-    document.querySelectorAll("#movieList li").forEach(function(li){
-        if(li !== card) li.classList.remove("active");
-    });
-
+    let allCards = document.querySelectorAll("#movieList li");
+    for(let i = 0; i < allCards.length; i++){
+        if(allCards[i] !== card){
+            allCards[i].classList.remove("active");
+        }
+    }
     card.classList.toggle("active");
 }
 
@@ -340,6 +402,67 @@ function deleteMovie(index, event){
     displayMovies();
 
 }
+
+// ---- Drag and drop: import movies from a dropped .json file, merging into the list ----
+
+document.body.addEventListener("dragover", function(e){
+    e.preventDefault();
+    document.body.classList.add("drag-active");
+});
+
+document.body.addEventListener("dragleave", function(e){
+    // only clear the highlight once the pointer actually leaves the window
+    if(e.clientY <= 0 || e.clientX <= 0 || e.clientX >= window.innerWidth || e.clientY >= window.innerHeight){
+        document.body.classList.remove("drag-active");
+    }
+});
+
+document.body.addEventListener("drop", function(e){
+
+    e.preventDefault();
+    document.body.classList.remove("drag-active");
+
+    let file = e.dataTransfer.files[0];
+
+    if(!file || !file.name.toLowerCase().endsWith(".json")){
+        alert("Please drop a .json file.");
+        return;
+    }
+
+    let reader = new FileReader();
+
+    reader.onload = function(event){
+
+        let imported;
+
+        try{
+            imported = JSON.parse(event.target.result);
+        } catch(err){
+            alert("That file isn't valid JSON.");
+            return;
+        }
+
+        if(!Array.isArray(imported)){
+            alert('Expected a JSON array of movies, e.g. [{"title":"...","rating":5}]');
+            return;
+        }
+
+        // merge: add each valid entry to the existing list
+        imported.forEach(function(m){
+            if(m && m.title){
+                movies.push({
+                    "title": m.title,
+                    "rating": Number(m.rating) || 0,
+                    "location": m.location || null
+                });
+            }
+        });
+
+        displayMovies();
+    };
+
+    reader.readAsText(file);
+});
 
 </script>
 

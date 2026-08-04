@@ -1,0 +1,214 @@
+        :root{
+            --gold: #b8860b;
+            --gold-light: #d4a537;
+            --paper: #faf7f2;
+            --ink: #2b2620;
+            --ink-soft: #6b6459;
+            --hairline: #e6ddcf;
+        }
+
+        body{
+            font-family: 'Jost', sans-serif;
+            font-weight: 300;
+            width: 92%;
+            max-width: 900px;
+            margin: 60px auto;
+            background: var(--paper);
+            color: var(--ink);
+            letter-spacing: 0.02em;
+        }
+
+        h2{
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
+            font-size: clamp(2.2rem, 7vw, 3.4rem);
+            text-align: center;
+            letter-spacing: 0.04em;
+            color: var(--ink);
+            margin-bottom: 4px;
+        }
+
+        h2::after{
+            content: "";
+            display:block;
+            width: 60px;
+            height: 1px;
+            background: var(--gold);
+            margin: 18px auto 40px;
+        }
+
+        .controls{
+            display:flex;
+            flex-wrap:wrap;
+            justify-content:center;
+            gap: 10px;
+        }
+
+        input,select,button{
+            padding:10px 14px;
+            margin:5px;
+            border-radius:2px;
+            border: 1px solid var(--hairline);
+            background: #fff;
+            font-family: 'Jost', sans-serif;
+            font-weight: 400;
+            font-size: 0.95rem;
+            color: var(--ink);
+        }
+
+        input:focus, select:focus{
+            outline: none;
+            border-color: var(--gold);
+        }
+
+        button{
+            cursor:pointer;
+            background-color: var(--gold);
+            color: #fff;
+            border: none;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-size: 0.78rem;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover{
+            background-color: var(--gold-light);
+        }
+
+        delete{
+            background: transparent;
+            color: var(--ink-soft);
+            border: 1px solid var(--hairline);
+            padding: 4px 10px;
+            border-radius: 2px;
+            float: right;
+            font-size: 0.7rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: border-color 0.2s ease, color 0.2s ease;
+        }
+
+        delete:hover{
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        hr{
+            border: none;
+            border-top: 1px solid var(--hairline);
+            margin: 30px 0;
+        }
+
+        ul{
+            list-style:none;
+            padding:0;
+            display:grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 22px;
+        }
+
+        li{
+            position: relative;
+            aspect-ratio: 2 / 3;
+            border-radius: 3px;
+            overflow: hidden;
+            border: 2px solid var(--gold);
+            box-shadow: 0 1px 3px rgba(43,38,32,0.08);
+            cursor: pointer;
+        }
+
+        /* II. poster image fills its card and resizes fluidly with it */
+        .poster{
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .overlay{
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(20,17,12,0.92) 0%, rgba(20,17,12,0.55) 45%, rgba(20,17,12,0) 75%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 16px;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        li:hover .overlay,
+        li.active .overlay{
+            opacity: 1;
+        }
+
+        .movie-title{
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
+            font-size: clamp(1rem, 2.2vw, 1.25rem);
+            color: #fff;
+            line-height: 1.15;
+        }
+
+        .stars{
+            color: var(--gold-light);
+            letter-spacing: 0.1em;
+            font-size: 0.85rem;
+            margin-top: 4px;
+            display: block;
+        }
+
+        delete{
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(20,17,12,0.6);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 3px 8px;
+            border-radius: 2px;
+            font-size: 0.62rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        delete:hover{
+            border-color: var(--gold-light);
+            color: var(--gold-light);
+        }
+
+        /* IV. Breakpoint 1: small phones — stack the form controls,
+           posters go to a single column so they stay big and readable */
+        @media (max-width: 480px){
+            input, select, button{
+                display:block;
+                width:100%;
+                margin:8px 0;
+            }
+
+            ul{
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+        }
+
+        /* IV. Breakpoint 2: tablets — 2 posters per row */
+        @media (min-width: 481px) and (max-width: 768px){
+            body{
+                width: 95%;
+            }
+
+            ul{
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* IV. Breakpoint 3: desktop — full 4-across poster wall */
+        @media (min-width: 769px){
+            ul{
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
