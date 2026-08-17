@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-
     <title>Movie Logger</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js" integrity="sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y" crossorigin="anonymous"></script>
     <style>
         :root{
             --gold: #b8860b;
@@ -16,160 +17,68 @@
             --ink: #2b2620;
             --ink-soft: #6b6459;
             --hairline: #e6ddcf;
+            --bs-primary: var(--gold);
+            --bs-primary-rgb: 184, 134, 11;
+            --bs-body-font-family: 'Jost', sans-serif;
+            --bs-border-radius: 2px;
         }
-
         body{
             font-family: 'Jost', sans-serif;
             font-weight: 300;
-            width: 92%;
-            max-width: 900px;
-            margin: 60px auto;
             background: var(--paper);
             color: var(--ink);
             letter-spacing: 0.02em;
-            transition: background-color 0.2s ease;
         }
-
-        /* highlight while dragging a JSON file over the page */
-        body.drag-active{
-            background-color: #fdf3dd;
-        }
-
         h2{
             font-family: 'Cormorant Garamond', serif;
             font-weight: 600;
             font-size: clamp(2.2rem, 7vw, 3.4rem);
-            text-align: center;
             letter-spacing: 0.04em;
             color: var(--ink);
             margin-bottom: 4px;
         }
-
         h2::after{
             content: "";
             display:block;
             width: 60px;
             height: 1px;
             background: var(--gold);
-            margin: 18px auto 40px;
+            margin: 18px auto 0;
         }
-
-        .controls{
-            display:flex;
-            flex-wrap:wrap;
-            justify-content:center;
-            gap: 10px;
-        }
-
-        input,select,button{
-            padding:10px 14px;
-            margin:5px;
-            border-radius:2px;
-            border: 1px solid var(--hairline);
-            background: #fff;
-            font-family: 'Jost', sans-serif;
-            font-weight: 400;
-            font-size: 0.95rem;
-            color: var(--ink);
-        }
-
-        input:focus, select:focus{
-            outline: none;
-            border-color: var(--gold);
-        }
-
-        button{
-            cursor:pointer;
-            background-color: var(--gold);
-            color: #fff;
-            border: none;
+        hr{ border-top: 1px solid var(--hairline); opacity: 1; }
+        .btn-primary, .btn-outline-secondary{
             letter-spacing: 0.08em;
             text-transform: uppercase;
             font-size: 0.78rem;
-            transition: background-color 0.2s ease;
+            font-weight: 400;
         }
-
-        button:hover{
-            background-color: var(--gold-light);
+        .btn-primary{ background-color: var(--gold); border-color: var(--gold); }
+        .btn-primary:hover, .btn-primary:focus{
+            background-color: var(--gold-light); border-color: var(--gold-light);
         }
-
-        delete{
-            background: transparent;
-            color: var(--ink-soft);
-            border: 1px solid var(--hairline);
-            padding: 4px 10px;
-            border-radius: 2px;
-            float: right;
-            font-size: 0.7rem;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: border-color 0.2s ease, color 0.2s ease;
-        }
-
-        delete:hover{
+        .form-control:focus{
             border-color: var(--gold);
-            color: var(--gold);
+            box-shadow: 0 0 0 0.2rem rgba(184, 134, 11, 0.15);
         }
-
-        hr{
-            border: none;
-            border-top: 1px solid var(--hairline);
-            margin: 30px 0;
-        }
-
-        .dropzone-hint{
-            text-align: center;
-            font-size: 0.75rem;
-            color: var(--ink-soft);
-            letter-spacing: 0.04em;
-            margin-top: -18px;
-            margin-bottom: 26px;
-        }
-
-        ul{
-            list-style:none;
-            padding:0;
-            display:grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 22px;
-        }
-
-        li{
-            position: relative;
+        .dropdown-item.active, .dropdown-item:active{ background-color: var(--gold); }
+        .poster-card{
             aspect-ratio: 2 / 3;
+            border: 2px solid var(--gold);
             border-radius: 3px;
             overflow: hidden;
-            border: 2px solid var(--gold);
             box-shadow: 0 1px 3px rgba(43,38,32,0.08);
             cursor: pointer;
         }
-
-        /* II. poster image fills its card and resizes fluidly with it */
-        .poster{
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .overlay{
-            position: absolute;
-            inset: 0;
+        .poster-card .card-img{ width: 100%; height: 100%; object-fit: cover; }
+        .poster-overlay{
             background: linear-gradient(to top, rgba(20,17,12,0.92) 0%, rgba(20,17,12,0.55) 45%, rgba(20,17,12,0) 75%);
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: 16px;
             opacity: 0;
             transition: opacity 0.25s ease;
+            padding: 16px;
+            pointer-events: none;
         }
-
-        li:hover .overlay,
-        li.active .overlay{
-            opacity: 1;
-        }
-
+        .poster-card:hover .poster-overlay,
+        .poster-card.active .poster-overlay{ opacity: 1; }
         .movie-title{
             font-family: 'Cormorant Garamond', serif;
             font-weight: 600;
@@ -177,290 +86,237 @@
             color: #fff;
             line-height: 1.15;
         }
-
-        .stars{
-            color: var(--gold-light);
-            letter-spacing: 0.1em;
-            font-size: 0.85rem;
-            margin-top: 4px;
-            display: block;
-        }
-
-        .location{
-            color: rgba(255,255,255,0.65);
-            font-size: 0.65rem;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            margin-top: 6px;
-            display: block;
-        }
-
-        delete{
-            position: absolute;
-            top: 10px;
-            right: 10px;
+        .stars{ color: var(--gold-light); letter-spacing: 0.1em; font-size: 0.85rem; }
+        .delete-btn{
             background: rgba(20,17,12,0.6);
-            color: #fff;
             border: 1px solid rgba(255,255,255,0.4);
-            padding: 3px 8px;
-            border-radius: 2px;
+            color: #fff;
             font-size: 0.62rem;
             letter-spacing: 0.06em;
             text-transform: uppercase;
-            cursor: pointer;
+            padding: 3px 8px;
         }
+        .delete-btn:hover{ border-color: var(--gold-light); color: var(--gold-light); }
 
-        delete:hover{
-            border-color: var(--gold-light);
-            color: var(--gold-light);
+        /* Drop zone for the Drag and Drop API */
+        #dropZone{
+            border: 2px dashed var(--hairline);
+            border-radius: 4px;
+            color: var(--ink-soft);
+            transition: all 0.2s ease;
+            cursor: default;
         }
-
-        /* IV. Breakpoint 1: small phones — stack the form controls,
-           posters go to a single column so they stay big and readable */
-        @media (max-width: 480px){
-            input, select, button{
-                display:block;
-                width:100%;
-                margin:8px 0;
-            }
-
-            ul{
-                grid-template-columns: 1fr;
-                gap: 18px;
-            }
-        }
-
-        /* IV. Breakpoint 2: tablets — 2 posters per row */
-        @media (min-width: 481px) and (max-width: 768px){
-            body{
-                width: 95%;
-            }
-
-            ul{
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        /* IV. Breakpoint 3: desktop — full 4-across poster wall */
-        @media (min-width: 769px){
-            ul{
-                grid-template-columns: repeat(4, 1fr);
-            }
+        #dropZone.drag-active{
+            border-color: var(--gold);
+            background: rgba(184, 134, 11, 0.06);
+            color: var(--gold);
         }
     </style>
 </head>
-
 <body>
 
-<h2>Movie Logger</h2>
+<div class="container py-5" style="max-width: 900px;">
 
-<div class="controls">
-    <input type="text" id="title" placeholder="Movie Name">
+    <h2 class="text-center mb-3">Movie Logger</h2>
 
-    <select id="rating">
-        <option value="5">★★★★★</option>
-        <option value="4">★★★★</option>
-        <option value="3">★★★</option>
-        <option value="2">★★</option>
-        <option value="1">★</option>
-    </select>
+    <p class="text-center mb-4">
+        <a href="geolocation.html" class="link-secondary text-decoration-none small">View my movies &amp; location →</a>
+    </p>
 
-    <button onclick="addMovie()">Add Movie</button>
+    <form class="row row-cols-auto justify-content-center g-2 align-items-center mb-3" onsubmit="return false;">
+        <div class="col">
+            <input type="text" id="title" class="form-control" placeholder="Movie Name">
+        </div>
+        <div class="col">
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="ratingDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span id="ratingLabel">★★★★★</span>
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="ratingDropdown">
+                    <li><a class="dropdown-item" href="#" onclick="setRating(5, this)">★★★★★</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="setRating(4, this)">★★★★</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="setRating(3, this)">★★★</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="setRating(2, this)">★★</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="setRating(1, this)">★</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="col">
+            <button class="btn btn-primary" onclick="addMovie()" id="addBtn">Add Movie</button>
+        </div>
+    </form>
+
+    <!-- Drag & Drop target -->
+    <div id="dropZone" class="text-center small py-3 mb-4">
+        Drag &amp; drop a <code>.json</code> file here to import movies
+    </div>
+
+    <hr>
+
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3" id="movieList"></div>
+
 </div>
-
-<p class="dropzone-hint">or drag &amp; drop a .json file anywhere on this page to import movies</p>
-
-<hr>
-
-<ul id="movieList"></ul>
 
 <script>
 
-let movies = [
-    {
-        "title":"One Battle After Another",
-        "rating":5,
-        "location": null
-    },
-    {
-        "title":"Italian Spiderman",
-        "rating":5,
-        "location": null
-    },
-    {
-        "title":"richa",
-        "rating":4,
-        "location": null
-    },
-    {
-        "title":"The Godfather",
-        "rating":5,
-        "location": null
-    }
+/* ---------- Local Storage ---------- */
+let STORAGE_KEY = "movies";
+
+let defaultMovies = [
+    {"title":"One Battle After Another","rating":5, "lat":null, "lng":null},
+    {"title":"Italian Spiderman","rating":5, "lat":null, "lng":null},
+    {"title":"richa","rating":4, "lat":null, "lng":null},
+    {"title":"The Godfather","rating":5, "lat":null, "lng":null}
 ];
+
+let stored = localStorage.getItem(STORAGE_KEY);
+let movies;
+try {
+    movies = stored ? JSON.parse(stored) : defaultMovies.slice();
+} catch(e){
+    movies = defaultMovies.slice();
+}
+
+let selectedRating = 5;
 
 displayMovies();
 
-function addMovie(){
-
-    let title = document.getElementById("title").value;
-    let rating = Number(document.getElementById("rating").value);
-
-    if(title=="")
-        return;
-
-    let newMovie = {
-        "title":title,
-        "rating":rating,
-        "location": null
-    };
-
-    movies.push(newMovie);
-
-    document.getElementById("title").value="";
-
-    displayMovies();
-
-    // Geolocation API: tag this entry with where it was logged from
-    tagLocation(newMovie);
+function saveMovies(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(movies));
 }
 
-function tagLocation(movieRef){
+function setRating(value, el){
+    selectedRating = value;
+    document.getElementById("ratingLabel").textContent = "★".repeat(value);
+}
 
-    if(!navigator.geolocation)
-        return;
+function addMovie(){
+    let title = document.getElementById("title").value;
+    if(title == "") return;
 
-    navigator.geolocation.getCurrentPosition(function(pos){
+    document.getElementById("title").value = "";
+    let addBtn = document.getElementById("addBtn");
+    addBtn.textContent = "Adding...";
+    addBtn.disabled = true;
 
-        let lat = pos.coords.latitude;
-        let lon = pos.coords.longitude;
-
-        // free reverse-geocoding, no API key needed
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-            .then(res => res.json())
-            .then(data => {
-                let addr = data.address || {};
-                let city = addr.city || addr.town || addr.village || addr.county || "";
-                let country = addr.country || "";
-
-                movieRef.location = [city, country].filter(Boolean).join(", ");
-
+    // Fetch location when adding the movie to tag "where you watched it"
+    if ("geolocation" in navigator && window.isSecureContext) {
+        navigator.geolocation.getCurrentPosition(
+            function(pos) {
+                movies.push({
+                    "title": title,
+                    "rating": selectedRating,
+                    "lat": pos.coords.latitude,
+                    "lng": pos.coords.longitude
+                });
+                saveMovies();
                 displayMovies();
-            })
-            .catch(() => {
-                // reverse geocoding failed, just leave location blank
-            });
-
-    }, function(err){
-        // permission denied or unavailable, silently skip
-        console.log("Geolocation unavailable:", err.message);
-    });
+                addBtn.textContent = "Add Movie";
+                addBtn.disabled = false;
+            },
+            function(err) {
+                alert("Could not get location: " + err.message + "\nAdding movie without coordinates.");
+                movies.push({"title": title, "rating": selectedRating, "lat": null, "lng": null});
+                saveMovies();
+                displayMovies();
+                addBtn.textContent = "Add Movie";
+                addBtn.disabled = false;
+            },
+            { timeout: 10000 }
+        );
+    } else {
+        // Fallback if geolocation is blocked or unsupported
+        movies.push({"title": title, "rating": selectedRating, "lat": null, "lng": null});
+        saveMovies();
+        displayMovies();
+        addBtn.textContent = "Add Movie";
+        addBtn.disabled = false;
+    }
 }
 
 function displayMovies(){
-
     let list = document.getElementById("movieList");
-
-    list.innerHTML="";
-
-    for(let i=0;i<movies.length;i++){
-
-        // II. poster image sourced per-movie, resizes responsively via .poster CSS
+    list.innerHTML = "";
+    for(let i = 0; i < movies.length; i++){
         let posterUrl = `https://picsum.photos/seed/${encodeURIComponent(movies[i].title)}/400/600`;
-
         list.innerHTML +=
-        `<li onclick="toggleActive(this, event)">
-            <img class="poster" src="${posterUrl}" alt="${movies[i].title} poster">
-            <div class="overlay">
-                <div class="movie-title">${movies[i].title}</div>
-                <span class="stars">${"★".repeat(movies[i].rating || 0)}</span>
-                ${movies[i].location ? `<span class="location">${movies[i].location}</span>` : ""}
+        `<div class="col">
+            <div class="card poster-card h-100" onclick="toggleActive(this, event)">
+                <img class="card-img poster" src="${posterUrl}" alt="${movies[i].title} poster">
+                <button type="button" class="btn btn-sm delete-btn position-absolute top-0 end-0 m-2" onclick="deleteMovie(${i}, event)">Delete</button>
+                <div class="card-img-overlay poster-overlay d-flex flex-column justify-content-end">
+                    <div class="movie-title">${movies[i].title}</div>
+                    <span class="stars">${"★".repeat(movies[i].rating || 0)}</span>
+                </div>
             </div>
-            <delete onclick="deleteMovie(${i}, event)"> Delete </delete>
-        </li>`;
+        </div>`;
     }
-    console.log(movies);
-
 }
 
 function toggleActive(card, event){
-    let allCards = document.querySelectorAll("#movieList li");
+    let allCards = document.querySelectorAll("#movieList .poster-card");
     for(let i = 0; i < allCards.length; i++){
-        if(allCards[i] !== card){
-            allCards[i].classList.remove("active");
-        }
+        if(allCards[i] !== card) allCards[i].classList.remove("active");
     }
     card.classList.toggle("active");
 }
 
 function deleteMovie(index, event){
-
     event.stopPropagation();
-
-    movies.splice(index,1);
-
+    movies.splice(index, 1);
+    saveMovies();
     displayMovies();
-
 }
 
-// ---- Drag and drop: import movies from a dropped .json file, merging into the list ----
+/* ---------- Drag & Drop API ---------- */
+let dropZone = document.getElementById("dropZone");
 
-document.body.addEventListener("dragover", function(e){
+dropZone.addEventListener("dragover", function(e){
     e.preventDefault();
-    document.body.classList.add("drag-active");
+    dropZone.classList.add("drag-active");
 });
 
-document.body.addEventListener("dragleave", function(e){
-    // only clear the highlight once the pointer actually leaves the window
-    if(e.clientY <= 0 || e.clientX <= 0 || e.clientX >= window.innerWidth || e.clientY >= window.innerHeight){
-        document.body.classList.remove("drag-active");
-    }
+dropZone.addEventListener("dragleave", function(e){
+    dropZone.classList.remove("drag-active");
 });
 
-document.body.addEventListener("drop", function(e){
-
+dropZone.addEventListener("drop", function(e){
     e.preventDefault();
-    document.body.classList.remove("drag-active");
+    dropZone.classList.remove("drag-active");
 
     let file = e.dataTransfer.files[0];
-
     if(!file || !file.name.toLowerCase().endsWith(".json")){
         alert("Please drop a .json file.");
         return;
     }
 
     let reader = new FileReader();
-
     reader.onload = function(event){
-
         let imported;
-
-        try{
+        try {
             imported = JSON.parse(event.target.result);
         } catch(err){
             alert("That file isn't valid JSON.");
             return;
         }
-
         if(!Array.isArray(imported)){
-            alert('Expected a JSON array of movies, e.g. [{"title":"...","rating":5}]');
+            alert('Expected a JSON array, e.g. [{"title":"...","rating":5}]');
             return;
         }
-
-        // merge: add each valid entry to the existing list
+        
         imported.forEach(function(m){
             if(m && m.title){
                 movies.push({
-                    "title": m.title,
+                    "title": m.title, 
                     "rating": Number(m.rating) || 0,
-                    "location": m.location || null
+                    "lat": m.lat || null,
+                    "lng": m.lng || null
                 });
             }
         });
-
+        saveMovies();
         displayMovies();
     };
-
     reader.readAsText(file);
 });
 
