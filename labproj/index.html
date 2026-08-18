@@ -9,106 +9,76 @@
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js" integrity="sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y" crossorigin="anonymous"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root{
             --gold: #b8860b;
-            --gold-light: #d4a537;
             --paper: #faf7f2;
             --ink: #2b2620;
             --ink-soft: #6b6459;
             --hairline: #e6ddcf;
-            --bs-primary: var(--gold);
-            --bs-primary-rgb: 184, 134, 11;
-            --bs-body-font-family: 'Jost', sans-serif;
-            --bs-border-radius: 2px;
         }
         body{
             font-family: 'Jost', sans-serif;
-            font-weight: 300;
             background: var(--paper);
             color: var(--ink);
-            letter-spacing: 0.02em;
         }
         h2{
             font-family: 'Cormorant Garamond', serif;
             font-weight: 600;
-            font-size: clamp(2.2rem, 7vw, 3.4rem);
+            font-size: clamp(2.6rem, 7vw, 3.8rem);
             letter-spacing: 0.04em;
             color: var(--ink);
-            margin-bottom: 4px;
         }
-        h2::after{
-            content: "";
-            display:block;
-            width: 60px;
-            height: 1px;
-            background: var(--gold);
-            margin: 18px auto 0;
+        .movie-poster {
+            aspect-ratio: 2/3;
+            object-fit: cover;
+            display: block;
+            width: 100%;
+            border-radius: 4px 4px 0 0;
+            border: 1px solid var(--hairline);
+            background: #eee;
         }
-        hr{ border-top: 1px solid var(--hairline); opacity: 1; }
-        .btn-primary, .btn-outline-secondary{
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            font-size: 0.78rem;
-            font-weight: 400;
-        }
-        .btn-primary{ background-color: var(--gold); border-color: var(--gold); }
-        .btn-primary:hover, .btn-primary:focus{
-            background-color: var(--gold-light); border-color: var(--gold-light);
-        }
-        .form-control:focus{
-            border-color: var(--gold);
-            box-shadow: 0 0 0 0.2rem rgba(184, 134, 11, 0.15);
-        }
-        .dropdown-item.active, .dropdown-item:active{ background-color: var(--gold); }
-        .poster-card{
-            aspect-ratio: 2 / 3;
-            border: 2px solid var(--gold);
-            border-radius: 3px;
+        .movie-card {
+            background: #f5efe7;
+            border: 1px solid var(--hairline);
+            border-radius: 6px;
             overflow: hidden;
-            box-shadow: 0 1px 3px rgba(43,38,32,0.08);
-            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
         }
-        .poster-card .card-img{ width: 100%; height: 100%; object-fit: cover; }
-        .poster-overlay{
-            background: linear-gradient(to top, rgba(20,17,12,0.92) 0%, rgba(20,17,12,0.55) 45%, rgba(20,17,12,0) 75%);
-            opacity: 0;
-            transition: opacity 0.25s ease;
-            padding: 16px;
-            pointer-events: none;
+        .movie-meta {
+            padding: 10px 10px 12px;
+            background: #f5efe7;
         }
-        .poster-card:hover .poster-overlay,
-        .poster-card.active .poster-overlay{ opacity: 1; }
-        .movie-title{
-            font-family: 'Cormorant Garamond', serif;
-            font-weight: 600;
-            font-size: clamp(1rem, 2.2vw, 1.25rem);
-            color: #fff;
-            line-height: 1.15;
+        .movie-name {
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: #2f2a24;
+            margin-bottom: 4px;
+            line-height: 1.2;
         }
-        .stars{ color: var(--gold-light); letter-spacing: 0.1em; font-size: 0.85rem; }
-        .delete-btn{
-            background: rgba(20,17,12,0.6);
-            border: 1px solid rgba(255,255,255,0.4);
-            color: #fff;
-            font-size: 0.62rem;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            padding: 3px 8px;
+        .movie-stars {
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            color: var(--gold);
         }
-        .delete-btn:hover{ border-color: var(--gold-light); color: var(--gold-light); }
-
-        /* Drop zone for the Drag and Drop API */
+        .delete-btn {
+            border: 1px solid #d9d0c3;
+            background: #f8f5f0;
+            color: var(--ink);
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
         #dropZone{
             border: 2px dashed var(--hairline);
-            border-radius: 4px;
+            border-radius: 6px;
             color: var(--ink-soft);
             transition: all 0.2s ease;
-            cursor: default;
         }
         #dropZone.drag-active{
             border-color: var(--gold);
-            background: rgba(184, 134, 11, 0.06);
+            background: rgba(184, 134, 11, 0.05);
             color: var(--gold);
         }
     </style>
@@ -142,7 +112,7 @@
             </div>
         </div>
         <div class="col">
-            <button class="btn btn-primary" onclick="addMovie()" id="addBtn">Add Movie</button>
+            <button class="btn btn-primary" style="background-color: var(--gold); border-color: var(--gold); color: #fff;" onclick="addMovie()" id="addBtn">Add Movie</button>
         </div>
     </form>
 
@@ -151,9 +121,9 @@
         Drag &amp; drop a <code>.json</code> file here to import movies
     </div>
 
-    <hr>
+    <hr class="mb-4">
 
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3" id="movieList"></div>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3 pt-2" id="movieList"></div>
 
 </div>
 
@@ -190,8 +160,27 @@ function setRating(value, el){
     document.getElementById("ratingLabel").textContent = "★".repeat(value);
 }
 
+function getMovieLocation(successCallback, errorCallback){
+    if (!("geolocation" in navigator)) {
+        errorCallback(new Error("Geolocation is not supported by this browser."));
+        return;
+    }
+
+    const isLocalhost = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+    if (!window.isSecureContext && !isLocalhost) {
+        errorCallback(new Error("Geolocation requires HTTPS or localhost."));
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(successCallback, errorCallback, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+    });
+}
+
 function addMovie(){
-    let title = document.getElementById("title").value;
+    let title = document.getElementById("title").value.trim();
     if(title == "") return;
 
     document.getElementById("title").value = "";
@@ -199,39 +188,30 @@ function addMovie(){
     addBtn.textContent = "Adding...";
     addBtn.disabled = true;
 
-    // Fetch location when adding the movie to tag "where you watched it"
-    if ("geolocation" in navigator && window.isSecureContext) {
-        navigator.geolocation.getCurrentPosition(
-            function(pos) {
-                movies.push({
-                    "title": title,
-                    "rating": selectedRating,
-                    "lat": pos.coords.latitude,
-                    "lng": pos.coords.longitude
-                });
-                saveMovies();
-                displayMovies();
-                addBtn.textContent = "Add Movie";
-                addBtn.disabled = false;
-            },
-            function(err) {
-                alert("Could not get location: " + err.message + "\nAdding movie without coordinates.");
-                movies.push({"title": title, "rating": selectedRating, "lat": null, "lng": null});
-                saveMovies();
-                displayMovies();
-                addBtn.textContent = "Add Movie";
-                addBtn.disabled = false;
-            },
-            { timeout: 10000 }
-        );
-    } else {
-        // Fallback if geolocation is blocked or unsupported
-        movies.push({"title": title, "rating": selectedRating, "lat": null, "lng": null});
-        saveMovies();
-        displayMovies();
-        addBtn.textContent = "Add Movie";
-        addBtn.disabled = false;
-    }
+    let newMovie = { "title": title, "rating": selectedRating, "lat": null, "lng": null };
+
+    getMovieLocation(
+        function(pos) {
+            movies.push({
+                "title": title,
+                "rating": selectedRating,
+                "lat": pos.coords.latitude,
+                "lng": pos.coords.longitude
+            });
+            saveMovies();
+            displayMovies();
+            addBtn.textContent = "Add Movie";
+            addBtn.disabled = false;
+        },
+        function(err) {
+            console.warn("Location failed:", err.message);
+            movies.push(newMovie);
+            saveMovies();
+            displayMovies();
+            addBtn.textContent = "Add Movie";
+            addBtn.disabled = false;
+        }
+    );
 }
 
 function displayMovies(){
@@ -239,26 +219,21 @@ function displayMovies(){
     list.innerHTML = "";
     for(let i = 0; i < movies.length; i++){
         let posterUrl = `https://picsum.photos/seed/${encodeURIComponent(movies[i].title)}/400/600`;
-        list.innerHTML +=
-        `<div class="col">
-            <div class="card poster-card h-100" onclick="toggleActive(this, event)">
-                <img class="card-img poster" src="${posterUrl}" alt="${movies[i].title} poster">
-                <button type="button" class="btn btn-sm delete-btn position-absolute top-0 end-0 m-2" onclick="deleteMovie(${i}, event)">Delete</button>
-                <div class="card-img-overlay poster-overlay d-flex flex-column justify-content-end">
-                    <div class="movie-title">${movies[i].title}</div>
-                    <span class="stars">${"★".repeat(movies[i].rating || 0)}</span>
+        list.innerHTML += `
+            <div class="col">
+                <div class="movie-card">
+                    <img class="movie-poster" src="${posterUrl}" alt="${movies[i].title} poster">
+                    <div class="movie-meta d-flex justify-content-between align-items-center gap-2">
+                        <div class="flex-grow-1">
+                            <div class="movie-name">${movies[i].title}</div>
+                            <div class="movie-stars">${"★".repeat(movies[i].rating || 0)}</div>
+                        </div>
+                        <button type="button" class="delete-btn" onclick="deleteMovie(${i}, event)">Delete</button>
+                    </div>
                 </div>
             </div>
-        </div>`;
+        `;
     }
-}
-
-function toggleActive(card, event){
-    let allCards = document.querySelectorAll("#movieList .poster-card");
-    for(let i = 0; i < allCards.length; i++){
-        if(allCards[i] !== card) allCards[i].classList.remove("active");
-    }
-    card.classList.toggle("active");
 }
 
 function deleteMovie(index, event){
