@@ -117,23 +117,19 @@ if(movies.length === 0){
 let status = document.getElementById("locationStatus");
 
 if("geolocation" in navigator){
-    if (!window.isSecureContext) {
-        status.innerHTML = "<span class='text-danger'>Geolocation blocked. Please run via a local server (like VS Code Live Server) instead of opening the file directly.</span>";
-    } else {
-        navigator.geolocation.getCurrentPosition(
-            function(pos){
-                let lat = pos.coords.latitude.toFixed(6);
-                let lng = pos.coords.longitude.toFixed(6);
-                status.innerHTML =
-                    `<strong>Latitude:</strong> ${lat}<br>
-                     <strong>Longitude:</strong> ${lng}<br>
-                     <span class="text-muted small">Accuracy: ±${pos.coords.accuracy.toFixed(0)} m</span>`;
+    navigator.geolocation.getCurrentPosition(
+        function(pos){
+            let lat = pos.coords.latitude.toFixed(6);
+            let lng = pos.coords.longitude.toFixed(6);
+            status.innerHTML =
+                `<strong>Latitude:</strong> ${lat}<br>
+                <strong>Longitude:</strong> ${lng}<br>
+                <span class="text-muted small">Accuracy: ±${pos.coords.accuracy.toFixed(0)} m</span>`;
             },
             function(err){
                 status.innerHTML = `<span class="text-danger">Unable to retrieve location: ${err.message}</span>`;
             }
         );
-    }
 } else {
     status.textContent = "Geolocation is not supported by this browser.";
 }

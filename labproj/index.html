@@ -10,291 +10,214 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js" integrity="sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y" crossorigin="anonymous"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
-        :root{
-            --gold: #b8860b;
-            --paper: #faf7f2;
-            --ink: #2b2620;
-            --ink-soft: #6b6459;
-            --hairline: #e6ddcf;
-        }
-        body{
-            font-family: 'Jost', sans-serif;
-            background: var(--paper);
-            color: var(--ink);
-        }
-        h2{
-            font-family: 'Cormorant Garamond', serif;
-            font-weight: 600;
-            font-size: clamp(2.6rem, 7vw, 3.8rem);
-            letter-spacing: 0.04em;
-            color: var(--ink);
-        }
-        .movie-poster {
-            aspect-ratio: 2/3;
-            object-fit: cover;
-            display: block;
-            width: 100%;
-            border-radius: 4px 4px 0 0;
-            border: 1px solid var(--hairline);
-            background: #eee;
-        }
-        .movie-card {
-            background: #f5efe7;
-            border: 1px solid var(--hairline);
-            border-radius: 6px;
-            overflow: hidden;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-        }
-        .movie-meta {
-            padding: 10px 10px 12px;
-            background: #f5efe7;
-        }
-        .movie-name {
-            font-size: 0.88rem;
-            font-weight: 500;
-            color: #2f2a24;
-            margin-bottom: 4px;
-            line-height: 1.2;
-        }
-        .movie-stars {
-            font-size: 0.8rem;
-            letter-spacing: 0.08em;
-            color: var(--gold);
-        }
-        .delete-btn {
-            border: 1px solid #d9d0c3;
-            background: #f8f5f0;
-            color: var(--ink);
-            font-size: 0.7rem;
-            padding: 4px 8px;
-            border-radius: 4px;
-        }
-        #dropZone{
-            border: 2px dashed var(--hairline);
-            border-radius: 6px;
-            color: var(--ink-soft);
-            transition: all 0.2s ease;
-        }
-        #dropZone.drag-active{
-            border-color: var(--gold);
-            background: rgba(184, 134, 11, 0.05);
-            color: var(--gold);
-        }
+        body { font-family: 'Jost', sans-serif; background: #faf7f2; color: #2b2620; }
+        h1 { font-family: 'Cormorant Garamond', serif; letter-spacing: .04em; }
+        .poster { aspect-ratio: 2/3; object-fit: cover; }
+        .drop-zone.drag-active { border-color: #b8860b; background: rgba(184, 134, 11, .05); color: #b8860b; }
     </style>
 </head>
-<body>
+<body class="min-h-screen bg-[#faf7f2] text-neutral-800 antialiased">
+
+<div id="app">
 
 <div class="container py-5" style="max-width: 900px;">
-
-    <h2 class="text-center mb-3">Movie Logger</h2>
-
+    <h1 class="text-center mb-3 text-[clamp(2.5rem,6vw,4rem)] font-semibold">Movie Logger</h1>
     <p class="text-center mb-4">
-        <a href="geolocation.html" class="link-secondary text-decoration-none small">View my movies &amp; location →</a>
+        <a href="geolocation.html" class="small text-secondary text-decoration-none">View my movies &amp; location →</a>
     </p>
 
-    <form class="row row-cols-auto justify-content-center g-2 align-items-center mb-3" onsubmit="return false;">
-        <div class="col">
-            <input type="text" id="title" class="form-control" placeholder="Movie Name">
+    <form class="row justify-content-center g-2 mb-3" @submit.prevent="addMovie">
+        <div class="col-auto">
+            <input v-model.trim="newMovie.title" class="form-control shadow-sm focus:ring-2 focus:ring-[#b8860b] focus:border-[#b8860b]" type="text" placeholder="Movie Name" aria-label="Movie name">
         </div>
-        <div class="col">
-            <div class="dropdown">
-                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="ratingDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    <span id="ratingLabel">★★★★★</span>
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="ratingDropdown">
-                    <li><a class="dropdown-item" href="#" onclick="setRating(5, this)">★★★★★</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="setRating(4, this)">★★★★</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="setRating(3, this)">★★★</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="setRating(2, this)">★★</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="setRating(1, this)">★</a></li>
-                </ul>
-            </div>
+        <div class="col-auto">
+            <select v-model.number="newMovie.rating" class="form-select" aria-label="Movie rating">
+                <option v-for="rating in 5" :key="rating" :value="rating">{{ '★'.repeat(rating) }}</option>
+            </select>
         </div>
-        <div class="col">
-            <button class="btn btn-primary" style="background-color: var(--gold); border-color: var(--gold); color: #fff;" onclick="addMovie()" id="addBtn">Add Movie</button>
+        <div class="col-auto">
+            <button class="btn text-white transition duration-200 hover:shadow-md hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed" style="background:#b8860b;border-color:#b8860b;" :disabled="isAdding || !newMovie.title" type="submit">{{ isAdding ? 'Adding...' : 'Add Movie' }}</button>
         </div>
     </form>
 
-    <!-- Drag & Drop target -->
-    <div id="dropZone" class="text-center small py-3 mb-4">
+    <div class="row g-2 mb-3">
+        <div class="col-sm-7">
+            <input v-model="searchText" class="form-control" type="search" placeholder="Search your movies..." aria-label="Search movies">
+        </div>
+        <div class="col-sm-5">
+            <select v-model="sortBy" class="form-select" aria-label="Sort movies">
+                <option value="newest">Recently added</option>
+                <option value="title">Title A-Z</option>
+                <option value="rating">Highest rated</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3 small text-secondary">
+        <span>{{ filteredMovies.length }} of {{ movies.length }} movies</span>
+        <span v-if="movies.length">Average rating: {{ averageRating }} / 5</span>
+    </div>
+
+    <div class="drop-zone text-center small py-3 mb-4 rounded border-2 border-dashed border-secondary-subtle" :class="{ 'drag-active': isDragging }" @dragover.prevent="isDragging = true" @dragenter.prevent="isDragging = true" @dragleave.prevent="isDragging = false" @drop.prevent="importFile($event)">
         Drag &amp; drop a <code>.json</code> file here to import movies
     </div>
 
     <hr class="mb-4">
-
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3 pt-2" id="movieList"></div>
+    <p v-if="!filteredMovies.length" class="text-center text-secondary py-4">No movies match your search.</p>
+    <div v-else class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3">
+        <div v-for="movie in filteredMovies" :key="movie.id" class="col">
+            <div class="bg-[#f5efe7] border border-[#e6ddcf] rounded overflow-hidden shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md">
+                <img class="poster w-100 border-bottom border-[#e6ddcf] transition duration-200" :src="posterFor(movie)" :alt="`${movie.title} poster`" @error="useFallback($event, movie)">
+                <div class="d-flex justify-content-between align-items-center gap-2 p-2 bg-[#f5efe7]">
+                    <div class="flex-grow-1 text-truncate">
+                        <div class="small fw-medium text-dark mb-1 text-truncate" :title="movie.title">{{ movie.title }}</div>
+                        <div class="small tracking-[.2em] text-warning">{{ '★'.repeat(movie.rating || 0) }}</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-light border" @click="deleteMovie(movie.id)">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 </div>
 
 <script>
-
-/* ---------- Local Storage ---------- */
-let STORAGE_KEY = "movies";
-
-let defaultMovies = [
-    {"title":"One Battle After Another","rating":5, "lat":null, "lng":null},
-    {"title":"Italian Spiderman","rating":5, "lat":null, "lng":null},
-    {"title":"richa","rating":4, "lat":null, "lng":null},
-    {"title":"The Godfather","rating":5, "lat":null, "lng":null}
+const { createApp } = Vue;
+const STORAGE_KEY = 'movies';
+const defaultMovies = [
+    { title: 'One Battle After Another', rating: 5, lat: 0, lng: 0 },
+    { title: 'Italian Spiderman', rating: 5, lat: 0, lng: 0 },
+    { title: 'richa', rating: 4, lat: 0, lng: 0 },
+    { title: 'The Godfather', rating: 5, lat: 0, lng: 0 }
 ];
 
-let stored = localStorage.getItem(STORAGE_KEY);
-let movies;
-try {
-    movies = stored ? JSON.parse(stored) : defaultMovies.slice();
-} catch(e){
-    movies = defaultMovies.slice();
+function buildFallbackPoster(title) {
+    const safe = (title || 'Movie').replace(/[&<>"']/g, '');
+    const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="400" height="600" viewBox="0 0 400 600">
+            <rect width="400" height="600" fill="#f3e8d6"/>
+            <rect x="26" y="26" width="348" height="548" rx="14" fill="rgba(255,255,255,.22)" stroke="#c8ac6d"/>
+            <text x="200" y="298" text-anchor="middle" font-size="28" font-family="Georgia,serif" fill="#2b2620" font-weight="700">${safe}</text>
+            <text x="200" y="340" text-anchor="middle" font-size="15" letter-spacing="3" font-family="Arial,sans-serif" fill="#6b6459">MOVIE POSTER</text>
+        </svg>
+    `;
+    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
-let selectedRating = 5;
-
-displayMovies();
-
-function saveMovies(){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(movies));
-}
-
-function setRating(value, el){
-    selectedRating = value;
-    document.getElementById("ratingLabel").textContent = "★".repeat(value);
-}
-
-function getMovieLocation(successCallback, errorCallback){
-    if (!("geolocation" in navigator)) {
-        errorCallback(new Error("Geolocation is not supported by this browser."));
-        return;
-    }
-
-    const isLocalhost = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
-    if (!window.isSecureContext && !isLocalhost) {
-        errorCallback(new Error("Geolocation requires HTTPS or localhost."));
-        return;
-    }
-
-    navigator.geolocation.getCurrentPosition(successCallback, errorCallback, {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-    });
-}
-
-function addMovie(){
-    let title = document.getElementById("title").value.trim();
-    if(title == "") return;
-
-    document.getElementById("title").value = "";
-    let addBtn = document.getElementById("addBtn");
-    addBtn.textContent = "Adding...";
-    addBtn.disabled = true;
-
-    let newMovie = { "title": title, "rating": selectedRating, "lat": null, "lng": null };
-
-    getMovieLocation(
-        function(pos) {
-            movies.push({
-                "title": title,
-                "rating": selectedRating,
-                "lat": pos.coords.latitude,
-                "lng": pos.coords.longitude
-            });
-            saveMovies();
-            displayMovies();
-            addBtn.textContent = "Add Movie";
-            addBtn.disabled = false;
-        },
-        function(err) {
-            console.warn("Location failed:", err.message);
-            movies.push(newMovie);
-            saveMovies();
-            displayMovies();
-            addBtn.textContent = "Add Movie";
-            addBtn.disabled = false;
-        }
-    );
-}
-
-function displayMovies(){
-    let list = document.getElementById("movieList");
-    list.innerHTML = "";
-    for(let i = 0; i < movies.length; i++){
-        let posterUrl = `https://picsum.photos/seed/${encodeURIComponent(movies[i].title)}/400/600`;
-        list.innerHTML += `
-            <div class="col">
-                <div class="movie-card">
-                    <img class="movie-poster" src="${posterUrl}" alt="${movies[i].title} poster">
-                    <div class="movie-meta d-flex justify-content-between align-items-center gap-2">
-                        <div class="flex-grow-1">
-                            <div class="movie-name">${movies[i].title}</div>
-                            <div class="movie-stars">${"★".repeat(movies[i].rating || 0)}</div>
-                        </div>
-                        <button type="button" class="delete-btn" onclick="deleteMovie(${i}, event)">Delete</button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-}
-
-function deleteMovie(index, event){
-    event.stopPropagation();
-    movies.splice(index, 1);
-    saveMovies();
-    displayMovies();
-}
-
-/* ---------- Drag & Drop API ---------- */
-let dropZone = document.getElementById("dropZone");
-
-dropZone.addEventListener("dragover", function(e){
-    e.preventDefault();
-    dropZone.classList.add("drag-active");
-});
-
-dropZone.addEventListener("dragleave", function(e){
-    dropZone.classList.remove("drag-active");
-});
-
-dropZone.addEventListener("drop", function(e){
-    e.preventDefault();
-    dropZone.classList.remove("drag-active");
-
-    let file = e.dataTransfer.files[0];
-    if(!file || !file.name.toLowerCase().endsWith(".json")){
-        alert("Please drop a .json file.");
-        return;
-    }
-
-    let reader = new FileReader();
-    reader.onload = function(event){
-        let imported;
+createApp({
+    data() {
+        let storedMovies;
         try {
-            imported = JSON.parse(event.target.result);
-        } catch(err){
-            alert("That file isn't valid JSON.");
-            return;
+            storedMovies = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+        } catch {
+            storedMovies = null;
         }
-        if(!Array.isArray(imported)){
-            alert('Expected a JSON array, e.g. [{"title":"...","rating":5}]');
-            return;
-        }
-        
-        imported.forEach(function(m){
-            if(m && m.title){
-                movies.push({
-                    "title": m.title, 
-                    "rating": Number(m.rating) || 0,
-                    "lat": m.lat || null,
-                    "lng": m.lng || null
-                });
-            }
-        });
-        saveMovies();
-        displayMovies();
-    };
-    reader.readAsText(file);
-});
 
+        const initialMovies = Array.isArray(storedMovies) ? storedMovies : defaultMovies.slice();
+        return {
+            movies: initialMovies.map((movie, index) => ({
+                ...movie,
+                id: movie.id || `legacy-${index}-${Date.now()}`,
+                createdAt: movie.createdAt || index
+            })),
+            newMovie: { title: '', rating: 5 },
+            searchText: '',
+            sortBy: 'newest',
+            isAdding: false,
+            isDragging: false
+        };
+    },
+    computed: {
+        filteredMovies() {
+            const query = this.searchText.toLowerCase();
+            return this.movies
+                .filter(movie => movie.title.toLowerCase().includes(query))
+                .slice()
+                .sort((first, second) => {
+                    if (this.sortBy === 'title') return first.title.localeCompare(second.title);
+                    if (this.sortBy === 'rating') return (second.rating || 0) - (first.rating || 0);
+                    return (second.createdAt || 0) - (first.createdAt || 0);
+                });
+        },
+        averageRating() {
+            if (!this.movies.length) return '0.0';
+            const average = this.movies.reduce((total, movie) => total + (movie.rating || 0), 0) / this.movies.length;
+            return average.toFixed(1);
+        }
+    },
+    methods: {
+        addMovie() {
+            if (!this.newMovie.title || this.isAdding) return;
+            const title = this.newMovie.title;
+            const rating = this.newMovie.rating;
+            this.isAdding = true;
+
+            const finish = (lat, lng) => {
+                this.movies.push({ id: Date.now(), title, rating, lat, lng, createdAt: Date.now() });
+                this.newMovie = { title: '', rating: 5 };
+                this.isAdding = false;
+            };
+
+            if (!navigator.geolocation) {
+                finish(null, null);
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                position => finish(position.coords.latitude, position.coords.longitude),
+                error => {
+                    console.warn('Location failed:', error.message);
+                    finish(null, null);
+                },
+                { enableHighAccuracy: false, timeout: 1000, maximumAge: 0 }
+            );
+        },
+        deleteMovie(id) {
+            this.movies = this.movies.filter(movie => movie.id !== id);
+        },
+        posterFor(movie) {
+            return movie.poster || `https://picsum.photos/seed/${encodeURIComponent(movie.title)}/400/600`;
+        },
+        useFallback(event, movie) {
+            event.target.onerror = null;
+            event.target.src = buildFallbackPoster(movie.title);
+        },
+        importFile(event) {
+            this.isDragging = false;
+            const file = event.dataTransfer.files[0];
+            if (!file || !file.name.toLowerCase().endsWith('.json')) {
+                alert('Please drop a .json file.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = loadEvent => {
+                try {
+                    const imported = JSON.parse(loadEvent.target.result);
+                    if (!Array.isArray(imported)) throw new Error();
+                    imported.forEach(item => {
+                        if (item && item.title) {
+                            this.movies.push({ id: Date.now() + Math.random(), title: item.title, rating: Number(item.rating) || 0, lat: item.lat || null, lng: item.lng || null, createdAt: Date.now() });
+                        }
+                    });
+                } catch {
+                    alert("That file isn't valid JSON.");
+                }
+            };
+            reader.readAsText(file);
+        }
+    },
+    watch: {
+        movies: {
+            deep: true,
+            handler(value) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+            }
+        }
+    }
+}).mount('#app');
 </script>
 
 </body>
