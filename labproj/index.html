@@ -3,6 +3,9 @@
 <head>
     <title>Movie Logger</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <!--
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+    -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +16,7 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
         body { font-family: 'Jost', sans-serif; background: #faf7f2; color: #2b2620; }
-        h1 { font-family: 'Cormorant Garamond', serif; letter-spacing: .04em; }
+        h1 { font-family: 'Cormorant Garamond', serif; letter-spacing: .04em; color: #b8860b; cursor: pointer; }
         .poster { aspect-ratio: 2/3; object-fit: cover; }
         .drop-zone.drag-active { border-color: #b8860b; background: rgba(184, 134, 11, .05); color: #b8860b; }
     </style>
@@ -23,7 +26,7 @@
 <div id="app">
 
 <div class="container py-5" style="max-width: 900px;">
-    <h1 class="text-center mb-3 text-[clamp(2.5rem,6vw,4rem)] font-semibold">Movie Logger</h1>
+    <h1 v-uppercase-on-click class="text-center mb-3 text-[clamp(2.5rem,6vw,4rem)] font-semibold">Movie Logger</h1>
     <p class="text-center mb-4">
         <a href="geolocation.html" class="small text-secondary text-decoration-none">View my movies &amp; location →</a>
     </p>
@@ -42,21 +45,8 @@
         </div>
     </form>
 
-    <div class="row g-2 mb-3">
-        <div class="col-sm-7">
-            <input v-model="searchText" class="form-control" type="search" placeholder="Search your movies..." aria-label="Search movies">
-        </div>
-        <div class="col-sm-5">
-            <select v-model="sortBy" class="form-select" aria-label="Sort movies">
-                <option value="newest">Recently added</option>
-                <option value="title">Title A-Z</option>
-                <option value="rating">Highest rated</option>
-            </select>
-        </div>
-    </div>
-
     <div class="d-flex justify-content-between align-items-center mb-3 small text-secondary">
-        <span>{{ filteredMovies.length }} of {{ movies.length }} movies</span>
+        <span>{{ movies.length }} movies</span>
         <span v-if="movies.length">Average rating: {{ averageRating }} / 5</span>
     </div>
 
@@ -65,9 +55,9 @@
     </div>
 
     <hr class="mb-4">
-    <p v-if="!filteredMovies.length" class="text-center text-secondary py-4">No movies match your search.</p>
+    <p v-if="!movies.length" class="text-center text-secondary py-4">No movies yet.</p>
     <div v-else class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3">
-        <div v-for="movie in filteredMovies" :key="movie.id" class="col">
+        <div v-for="movie in movies" :key="movie.id" class="col">
             <div class="bg-[#f5efe7] border border-[#e6ddcf] rounded overflow-hidden shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md">
                 <img class="poster w-100 border-bottom border-[#e6ddcf] transition duration-200" :src="posterFor(movie)" :alt="`${movie.title} poster`" @error="useFallback($event, movie)">
                 <div class="d-flex justify-content-between align-items-center gap-2 p-2 bg-[#f5efe7]">
@@ -124,24 +114,11 @@ createApp({
                 createdAt: movie.createdAt || index
             })),
             newMovie: { title: '', rating: 5 },
-            searchText: '',
-            sortBy: 'newest',
             isAdding: false,
             isDragging: false
         };
     },
     computed: {
-        filteredMovies() {
-            const query = this.searchText.toLowerCase();
-            return this.movies
-                .filter(movie => movie.title.toLowerCase().includes(query))
-                .slice()
-                .sort((first, second) => {
-                    if (this.sortBy === 'title') return first.title.localeCompare(second.title);
-                    if (this.sortBy === 'rating') return (second.rating || 0) - (first.rating || 0);
-                    return (second.createdAt || 0) - (first.createdAt || 0);
-                });
-        },
         averageRating() {
             if (!this.movies.length) return '0.0';
             const average = this.movies.reduce((total, movie) => total + (movie.rating || 0), 0) / this.movies.length;
@@ -209,13 +186,20 @@ createApp({
             reader.readAsText(file);
         }
     },
-    watch: {
+    watch:
+     {
         movies: {
             deep: true,
             handler(value) {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
             }
         }
+    }
+}).directive('uppercase-on-click', {
+    mounted(element) {
+        element.addEventListener('click', () => {
+            element.textContent = element.textContent.toUpperCase();
+        });
     }
 }).mount('#app');
 </script>
