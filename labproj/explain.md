@@ -6,7 +6,7 @@ This page is a small movie tracker app. It lets the user:
 
 - add a movie name
 - choose a star rating
-- save the movie in the browser
+- save the movie through the Node.js API into MySQL
 - view the saved movies as cards
 - delete movies
 - import movies from a JSON file
@@ -47,8 +47,8 @@ This is the visible page layout:
 ### C. Script section
 This contains the logic:
 
-- save movies in localStorage
-- load saved movies when the page opens
+- save movies through the Node.js API
+- load saved movies from MySQL when the page opens
 - render movie cards dynamically
 - add new movies
 - delete movies
@@ -120,9 +120,7 @@ When the page opens, JavaScript runs.
 
 It does this:
 
-- reads the saved movie data from localStorage
-- if data exists, uses it
-- otherwise, it uses default sample movies
+- requests the saved movie data from MySQL through the API
 
 ### Step 2: movie list is rendered
 The function displayMovies() creates the card layout for each movie.
@@ -142,14 +140,14 @@ When the user clicks Add Movie:
 - asks the browser for geolocation
 - if geolocation succeeds, it saves latitude and longitude
 - if geolocation fails, it still saves the movie without coordinates
-- saves the updated movie list to localStorage
+- saves the movie through the API into MySQL
 - re-renders the page
 
 ### Step 4: delete movie
 When the delete button is clicked:
 
 - the movie is removed from the array
-- the list is saved again
+- the delete request is sent to the API
 - the page is re-rendered
 
 ### Step 5: import JSON
@@ -214,7 +212,7 @@ This prevents broken images from showing on the page.
 The script contains several main functions:
 
 - saveMovies()
-  Saves the movie array to localStorage
+  Movie writes are handled by the Node.js API and MySQL
 
 - setRating(value)
   Changes the selected rating and updates the rating label
@@ -251,3 +249,20 @@ This page is a small front-end movie tracking app built using:
 - JavaScript for dynamic functionality
 
 It is a good example of mixing libraries and custom code to create a clean and interactive interface without making the file too complicated.
+
+## 11. Authentication and role-based access
+
+The Node server in `app.js` now provides a small demonstration authentication layer:
+
+- `jay / 1234` signs in as an `admin`
+- `student / 1234` signs in as a regular `user`
+- authenticated users can view and add movies
+- administrators can additionally delete movies and import JSON files
+- `/api/admin` is protected on the server and returns `403` for regular users
+
+The browser stores only a temporary session token in `sessionStorage`. The demo users,
+passwords, and active sessions are currently kept in server memory, so they are lost
+when the server restarts. This is intentionally a first step before moving users,
+hashed passwords, sessions, and movie records into MySQL. It should not be used as
+production authentication until that migration is complete and the application is
+served over HTTPS.

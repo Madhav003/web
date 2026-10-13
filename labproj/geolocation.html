@@ -84,34 +84,34 @@
 
 <script>
 
-/* ---------- Read the same list the main page saved to localStorage ---------- */
-let movies = [];
-try {
-    movies = JSON.parse(localStorage.getItem("movies")) || [];
-} catch(e){
-    movies = [];
-}
-
-let list = document.getElementById("movieList");
-if(movies.length === 0){
-    list.innerHTML = '<li class="list-group-item text-muted">No movies saved yet.</li>';
-} else {
-    movies.forEach(function(m){
-        let coordsText = "Location not saved";
-        if(m.lat && m.lng){
-            coordsText = `Watched at: Lat ${m.lat}, Lng ${m.lng}`;
+/* ---------- Read the movie list from MySQL through the server API ---------- */
+const token = sessionStorage.getItem("movieLoggerAuthToken");
+const list = document.getElementById("movieList");
+fetch("/api/movies", { headers: { Authorization: `Bearer ${token}` } })
+    .then(response => response.ok ? response.text() : Promise.reject())
+    .then(text => text ? JSON.parse(text) : [])
+    .then(movies => {
+        if (!movies.length) {
+            list.innerHTML = '<li class="list-group-item text-muted">No movies saved yet.</li>';
+            return;
         }
-        
-        list.innerHTML +=
-        `<li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
-            <div class="me-3">
-                <div class="fw-bold">${m.title}</div>
-                <small class="text-muted">${coordsText}</small>
-            </div>
-            <span class="stars">${"★".repeat(m.rating || 0)}</span>
-        </li>`;
+        movies.forEach(function(m){
+            const coordsText = m.lat !== null && m.lng !== null
+                ? `Watched at: Lat ${m.lat}, Lng ${m.lng}`
+                : "Location not saved";
+            list.innerHTML +=
+            `<li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
+                <div class="me-3">
+                    <div class="fw-bold">${m.title}</div>
+                    <small class="text-muted">${coordsText}</small>
+                </div>
+                <span class="stars">${"★".repeat(m.rating || 0)}</span>
+            </li>`;
+        });
+    })
+    .catch(() => {
+        list.innerHTML = '<li class="list-group-item text-danger">Please sign in first.</li>';
     });
-}
 
 /* ---------- Geolocation API ---------- */
 let status = document.getElementById("locationStatus");

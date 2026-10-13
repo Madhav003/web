@@ -26,7 +26,35 @@
 <div id="app">
 
 <div class="container py-5" style="max-width: 900px;">
+    <div v-if="!currentUser" class="mx-auto" style="max-width: 420px;">
+        <h1 class="text-center mb-3 text-[clamp(2.5rem,6vw,4rem)] font-semibold">Movie Logger</h1>
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <h2 class="h5 mb-3">Sign in</h2>
+                <form @submit.prevent="login">
+                    <label class="form-label" for="username">Username</label>
+                    <input id="username" v-model.trim="loginForm.username" class="form-control mb-3" autocomplete="username" required>
+                    <label class="form-label" for="password">Password</label>
+                    <input id="password" v-model="loginForm.password" class="form-control mb-3" type="password" autocomplete="current-password" required>
+                    <button class="btn w-100 text-white" style="background:#b8860b;border-color:#b8860b;" :disabled="isLoggingIn" type="submit">
+                        {{ isLoggingIn ? 'Signing in...' : 'Sign in' }}
+                    </button>
+                </form>
+                <p v-if="authError" class="text-danger small mt-3 mb-0">{{ authError }}</p>
+                <p class="text-secondary small mt-3 mb-0">Demo accounts: jay / 1234 or student / 1234</p>
+            </div>
+        </div>
+    </div>
+
+    <template v-else>
+    <div class="text-end small text-secondary mb-2">
+        <span v-human-date="currentDate"></span>
+    </div>
     <h1 v-uppercase-on-click class="text-center mb-3 text-[clamp(2.5rem,6vw,4rem)] font-semibold">Movie Logger</h1>
+    <div class="d-flex justify-content-center align-items-center gap-3 mb-4 small">
+        <span>Signed in as <strong>{{ currentUser.username }}</strong> ({{ currentUser.role }})</span>
+        <button class="btn btn-sm btn-outline-secondary" type="button" @click="logout">Sign out</button>
+    </div>
     <p class="text-center mb-4">
         <a href="geolocation.html" class="small text-secondary text-decoration-none">View my movies &amp; location →</a>
     </p>
@@ -50,7 +78,7 @@
         <span v-if="movies.length">Average rating: {{ averageRating }} / 5</span>
     </div>
 
-    <div class="drop-zone text-center small py-3 mb-4 rounded border-2 border-dashed border-secondary-subtle" :class="{ 'drag-active': isDragging }" @dragover.prevent="isDragging = true" @dragenter.prevent="isDragging = true" @dragleave.prevent="isDragging = false" @drop.prevent="importFile($event)">
+    <div v-if="isAdmin" class="drop-zone text-center small py-3 mb-4 rounded border-2 border-dashed border-secondary-subtle" :class="{ 'drag-active': isDragging }" @dragover.prevent="isDragging = true" @dragenter.prevent="isDragging = true" @dragleave.prevent="isDragging = false" @drop.prevent="importFile($event)">
         Drag &amp; drop a <code>.json</code> file here to import movies
     </div>
 
@@ -65,8 +93,9 @@
                         <div class="small fw-medium text-dark mb-1 text-truncate" :title="movie.title">{{ movie.title }}</div>
                         <div class="small tracking-[.2em] text-warning">{{ '★'.repeat(movie.rating || 0) }}</div>
                     </div>
-                    <button type="button" class="btn btn-sm btn-light border" @click="deleteMovie(movie.id)">Delete</button>
+                    <button v-if="isAdmin" type="button" class="btn btn-sm btn-light border" @click="deleteMovie(movie.id)">Delete</button>
                 </div>
+                </template>
             </div>
         </div>
     </div>
@@ -76,13 +105,16 @@
 
 <script>
 const { createApp } = Vue;
-const STORAGE_KEY = 'movies';
-const defaultMovies = [
-    { title: 'One Battle After Another', rating: 5, lat: 0, lng: 0 },
-    { title: 'Italian Spiderman', rating: 5, lat: 0, lng: 0 },
-    { title: 'richa', rating: 4, lat: 0, lng: 0 },
-    { title: 'The Godfather', rating: 5, lat: 0, lng: 0 }
-];
+const AUTH_TOKEN_KEY = 'movieLoggerAuthToken';
+
+async function responseData(response) {
+    const text = await response.text();
+    try {
+        return text ? JSON.parse(text) : {};
+    } catch {
+        throw new Error(`Server returned invalid data (HTTP ${response.status})`);
+    }
+}
 
 function buildFallbackPoster(title) {
     const safe = (title || 'Movie').replace(/[&<>"']/g, '');
@@ -99,26 +131,25 @@ function buildFallbackPoster(title) {
 
 createApp({
     data() {
-        let storedMovies;
-        try {
-            storedMovies = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-        } catch {
-            storedMovies = null;
-        }
-
-        const initialMovies = Array.isArray(storedMovies) ? storedMovies : defaultMovies.slice();
         return {
-            movies: initialMovies.map((movie, index) => ({
-                ...movie,
-                id: movie.id || `legacy-${index}-${Date.now()}`,
-                createdAt: movie.createdAt || index
-            })),
+            movies: [],
             newMovie: { title: '', rating: 5 },
             isAdding: false,
-            isDragging: false
+            isDragging: false,
+            currentDate: new Date(),
+            currentUser: null,
+            loginForm: { username: '', password: '' },
+            authError: '',
+            isLoggingIn: false
         };
     },
+    created() {
+        this.restoreSession();
+    },
     computed: {
+        isAdmin() {
+            return this.currentUser && this.currentUser.role === 'admin';
+        },
         averageRating() {
             if (!this.movies.length) return '0.0';
             const average = this.movies.reduce((total, movie) => total + (movie.rating || 0), 0) / this.movies.length;
@@ -126,14 +157,67 @@ createApp({
         }
     },
     methods: {
+        async login() {
+            this.isLoggingIn = true;
+            this.authError = '';
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.loginForm)
+                });
+                const result = await responseData(response);
+                if (!response.ok) throw new Error(result.message || 'Authentication failed');
+                sessionStorage.setItem(AUTH_TOKEN_KEY, result.token);
+                this.currentUser = result.user;
+                await this.loadMovies();
+                this.loginForm = { username: '', password: '' };
+            } catch (error) {
+                this.authError = error.message;
+            } finally {
+                this.isLoggingIn = false;
+            }
+        },
+        async restoreSession() {
+            const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
+            if (!token) return;
+            try {
+                const response = await fetch('/api/me', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Session expired');
+                this.currentUser = (await responseData(response)).user;
+                await this.loadMovies();
+            } catch {
+                sessionStorage.removeItem(AUTH_TOKEN_KEY);
+            }
+        },
+        async logout() {
+            const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
+            if (token) {
+                await fetch('/api/logout', {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+            }
+            sessionStorage.removeItem(AUTH_TOKEN_KEY);
+            this.currentUser = null;
+        },
         addMovie() {
             if (!this.newMovie.title || this.isAdding) return;
             const title = this.newMovie.title;
             const rating = this.newMovie.rating;
             this.isAdding = true;
 
-            const finish = (lat, lng) => {
-                this.movies.push({ id: Date.now(), title, rating, lat, lng, createdAt: Date.now() });
+            const finish = async (lat, lng) => {
+                const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
+                const response = await fetch('/api/movies', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ title, rating, lat, lng })
+                });
+                if (!response.ok) throw new Error('Could not save movie');
+                this.movies.unshift(await responseData(response));
                 this.newMovie = { title: '', rating: 5 };
                 this.isAdding = false;
             };
@@ -151,8 +235,19 @@ createApp({
                 { enableHighAccuracy: false, timeout: 1000, maximumAge: 0 }
             );
         },
-        deleteMovie(id) {
-            this.movies = this.movies.filter(movie => movie.id !== id);
+        async loadMovies() {
+            const response = await fetch('/api/movies', {
+                headers: { Authorization: `Bearer ${sessionStorage.getItem(AUTH_TOKEN_KEY)}` }
+            });
+            if (!response.ok) throw new Error('Could not load movies');
+            this.movies = await responseData(response);
+        },
+        async deleteMovie(id) {
+            await fetch(`/api/movies/${id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${sessionStorage.getItem(AUTH_TOKEN_KEY)}` }
+            });
+            await this.loadMovies();
         },
         posterFor(movie) {
             return movie.poster || `https://picsum.photos/seed/${encodeURIComponent(movie.title)}/400/600`;
@@ -174,26 +269,37 @@ createApp({
                 try {
                     const imported = JSON.parse(loadEvent.target.result);
                     if (!Array.isArray(imported)) throw new Error();
-                    imported.forEach(item => {
-                        if (item && item.title) {
-                            this.movies.push({ id: Date.now() + Math.random(), title: item.title, rating: Number(item.rating) || 0, lat: item.lat || null, lng: item.lng || null, createdAt: Date.now() });
-                        }
-                    });
+                    fetch('/api/movies/import', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${sessionStorage.getItem(AUTH_TOKEN_KEY)}`
+                        },
+                        body: JSON.stringify(imported.filter(item => item && item.title))
+                    }).then(() => this.loadMovies());
                 } catch {
                     alert("That file isn't valid JSON.");
                 }
             };
             reader.readAsText(file);
         }
+    }
+}).directive('human-date', {
+    mounted(element, binding) {
+        element.textContent = new Date(binding.value).toLocaleDateString(undefined, {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
     },
-    watch:
-     {
-        movies: {
-            deep: true,
-            handler(value) {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
-            }
-        }
+    updated(element, binding) {
+        element.textContent = new Date(binding.value).toLocaleDateString(undefined, {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
     }
 }).directive('uppercase-on-click', {
     mounted(element) {

@@ -1,5 +1,9 @@
 {
+  "scripts": {
+    "start": "node app.js"
+  },
   "dependencies": {
-    "bootstrap": "^5.3.8"
+    "bootstrap": "^5.3.8",
+    "mysql2": "^3.15.0"
   }
 }
