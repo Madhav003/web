@@ -105,16 +105,8 @@
 
 <script>
 const { createApp } = Vue;
-const AUTH_TOKEN_KEY = 'movieLoggerAuthToken';
-
-async function responseData(response) {
-    const text = await response.text();
-    try {
-        return text ? JSON.parse(text) : {};
-    } catch {
-        throw new Error(`Server returned invalid data (HTTP ${response.status})`);
-    }
-}
+const MOVIES_KEY = 'movies';
+const USER_KEY = 'movieLoggerUser';
 
 function buildFallbackPoster(title) {
     const safe = (title || 'Movie').replace(/[&<>"']/g, '');
@@ -131,20 +123,19 @@ function buildFallbackPoster(title) {
 
 createApp({
     data() {
+        const savedMovies = JSON.parse(localStorage.getItem(MOVIES_KEY) || '[]');
+        const savedUser = JSON.parse(localStorage.getItem(USER_KEY) || 'null');
         return {
-            movies: [],
+            movies: Array.isArray(savedMovies) ? savedMovies : [],
             newMovie: { title: '', rating: 5 },
             isAdding: false,
             isDragging: false,
             currentDate: new Date(),
-            currentUser: null,
+            currentUser: savedUser,
             loginForm: { username: '', password: '' },
             authError: '',
             isLoggingIn: false
         };
-    },
-    created() {
-        this.restoreSession();
     },
     computed: {
         isAdmin() {
@@ -162,15 +153,15 @@ createApp({
             this.authError = '';
             try {
                 const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(this.loginForm)
+                    headers: {
+                        username: this.loginForm.username,
+                        password: this.loginForm.password
+                    }
                 });
-                const result = await responseData(response);
+                const result = await response.json();
                 if (!response.ok) throw new Error(result.message || 'Authentication failed');
-                sessionStorage.setItem(AUTH_TOKEN_KEY, result.token);
-                this.currentUser = result.user;
-                await this.loadMovies();
+                this.currentUser = { username: result.user, role: result.role };
+                localStorage.setItem(USER_KEY, JSON.stringify(this.currentUser));
                 this.loginForm = { username: '', password: '' };
             } catch (error) {
                 this.authError = error.message;
@@ -178,29 +169,8 @@ createApp({
                 this.isLoggingIn = false;
             }
         },
-        async restoreSession() {
-            const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
-            if (!token) return;
-            try {
-                const response = await fetch('/api/me', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                if (!response.ok) throw new Error('Session expired');
-                this.currentUser = (await responseData(response)).user;
-                await this.loadMovies();
-            } catch {
-                sessionStorage.removeItem(AUTH_TOKEN_KEY);
-            }
-        },
-        async logout() {
-            const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
-            if (token) {
-                await fetch('/api/logout', {
-                    method: 'POST',
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-            }
-            sessionStorage.removeItem(AUTH_TOKEN_KEY);
+        logout() {
+            localStorage.removeItem(USER_KEY);
             this.currentUser = null;
         },
         addMovie() {
@@ -209,15 +179,9 @@ createApp({
             const rating = this.newMovie.rating;
             this.isAdding = true;
 
-            const finish = async (lat, lng) => {
-                const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
-                const response = await fetch('/api/movies', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                    body: JSON.stringify({ title, rating, lat, lng })
-                });
-                if (!response.ok) throw new Error('Could not save movie');
-                this.movies.unshift(await responseData(response));
+            const finish = (lat, lng) => {
+                this.movies.unshift({ id: Date.now(), title, rating, lat, lng, createdAt: Date.now() });
+                localStorage.setItem(MOVIES_KEY, JSON.stringify(this.movies));
                 this.newMovie = { title: '', rating: 5 };
                 this.isAdding = false;
             };
@@ -235,19 +199,9 @@ createApp({
                 { enableHighAccuracy: false, timeout: 1000, maximumAge: 0 }
             );
         },
-        async loadMovies() {
-            const response = await fetch('/api/movies', {
-                headers: { Authorization: `Bearer ${sessionStorage.getItem(AUTH_TOKEN_KEY)}` }
-            });
-            if (!response.ok) throw new Error('Could not load movies');
-            this.movies = await responseData(response);
-        },
-        async deleteMovie(id) {
-            await fetch(`/api/movies/${id}`, {
-                method: 'DELETE',
-                headers: { Authorization: `Bearer ${sessionStorage.getItem(AUTH_TOKEN_KEY)}` }
-            });
-            await this.loadMovies();
+        deleteMovie(id) {
+            this.movies = this.movies.filter(movie => movie.id !== id);
+            localStorage.setItem(MOVIES_KEY, JSON.stringify(this.movies));
         },
         posterFor(movie) {
             return movie.poster || `https://picsum.photos/seed/${encodeURIComponent(movie.title)}/400/600`;
@@ -269,14 +223,17 @@ createApp({
                 try {
                     const imported = JSON.parse(loadEvent.target.result);
                     if (!Array.isArray(imported)) throw new Error();
-                    fetch('/api/movies/import', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${sessionStorage.getItem(AUTH_TOKEN_KEY)}`
-                        },
-                        body: JSON.stringify(imported.filter(item => item && item.title))
-                    }).then(() => this.loadMovies());
+                    imported.filter(item => item && item.title).forEach(item => {
+                        this.movies.push({
+                            id: Date.now() + Math.random(),
+                            title: item.title,
+                            rating: Number(item.rating) || 0,
+                            lat: item.lat || null,
+                            lng: item.lng || null,
+                            createdAt: Date.now()
+                        });
+                    });
+                    localStorage.setItem(MOVIES_KEY, JSON.stringify(this.movies));
                 } catch {
                     alert("That file isn't valid JSON.");
                 }

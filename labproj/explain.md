@@ -252,7 +252,7 @@ It is a good example of mixing libraries and custom code to create a clean and i
 
 ## 11. Authentication and role-based access
 
-The Node server in `app.js` now provides a small demonstration authentication layer:
+The Node server in `app.js` provides a small demonstration authentication layer:
 
 - `jay / 1234` signs in as an `admin`
 - `student / 1234` signs in as a regular `user`
@@ -260,9 +260,6 @@ The Node server in `app.js` now provides a small demonstration authentication la
 - administrators can additionally delete movies and import JSON files
 - `/api/admin` is protected on the server and returns `403` for regular users
 
-The browser stores only a temporary session token in `sessionStorage`. The demo users,
-passwords, and active sessions are currently kept in server memory, so they are lost
-when the server restarts. This is intentionally a first step before moving users,
-hashed passwords, sessions, and movie records into MySQL. It should not be used as
-production authentication until that migration is complete and the application is
-served over HTTPS.
+The browser stores the signed-in user and movie list in `localStorage`. The demo users
+and passwords are kept in the simple JavaScript server, matching the supplied example.
+This is suitable for a classroom demonstration only, not production authentication.

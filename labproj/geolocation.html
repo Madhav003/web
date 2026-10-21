@@ -84,34 +84,26 @@
 
 <script>
 
-/* ---------- Read the movie list from MySQL through the server API ---------- */
-const token = sessionStorage.getItem("movieLoggerAuthToken");
+/* ---------- Read the same list saved by the main page ---------- */
+const movies = JSON.parse(localStorage.getItem("movies") || "[]");
 const list = document.getElementById("movieList");
-fetch("/api/movies", { headers: { Authorization: `Bearer ${token}` } })
-    .then(response => response.ok ? response.text() : Promise.reject())
-    .then(text => text ? JSON.parse(text) : [])
-    .then(movies => {
-        if (!movies.length) {
-            list.innerHTML = '<li class="list-group-item text-muted">No movies saved yet.</li>';
-            return;
-        }
-        movies.forEach(function(m){
-            const coordsText = m.lat !== null && m.lng !== null
-                ? `Watched at: Lat ${m.lat}, Lng ${m.lng}`
-                : "Location not saved";
-            list.innerHTML +=
-            `<li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
-                <div class="me-3">
-                    <div class="fw-bold">${m.title}</div>
-                    <small class="text-muted">${coordsText}</small>
-                </div>
-                <span class="stars">${"★".repeat(m.rating || 0)}</span>
-            </li>`;
-        });
-    })
-    .catch(() => {
-        list.innerHTML = '<li class="list-group-item text-danger">Please sign in first.</li>';
+if (!movies.length) {
+    list.innerHTML = '<li class="list-group-item text-muted">No movies saved yet.</li>';
+} else {
+    movies.forEach(function(m){
+        const coordsText = m.lat !== null && m.lng !== null
+            ? `Watched at: Lat ${m.lat}, Lng ${m.lng}`
+            : "Location not saved";
+        list.innerHTML +=
+        `<li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
+            <div class="me-3">
+                <div class="fw-bold">${m.title}</div>
+                <small class="text-muted">${coordsText}</small>
+            </div>
+            <span class="stars">${"★".repeat(m.rating || 0)}</span>
+        </li>`;
     });
+}
 
 /* ---------- Geolocation API ---------- */
 let status = document.getElementById("locationStatus");
